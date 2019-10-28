@@ -8,8 +8,9 @@
 /temp/
 .vscode/
 /dist/content.js*
-package-lock.json
 /config.js
+/dist/
+*.zip
 
 *.crx
 *.pem

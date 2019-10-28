@@ -2,20 +2,34 @@
 const webpack = require('webpack')
 const sysConfigDefault = require('./config.default')
 const ExtraneousFileCleanupPlugin = require('webpack-extraneous-file-cleanup-plugin')
-const packThreadCount = sysConfigDefault.devCPUCount // number
-const HappyPack = require('happypack')
-const happyThreadPool = packThreadCount === 0 ? null : HappyPack.ThreadPool({ size: packThreadCount })
 const path = require('path')
 const LodashModuleReplacementPlugin = require('lodash-webpack-plugin')
-const express = require('express')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
+const pack = require('./package.json')
 
-const happyConf = {
-  loaders: ['babel-loader'],
-  threadPool: happyThreadPool,
-  verbose: true
-}
+const from = path.resolve(
+  __dirname,
+  'node_modules/ringcentral-embeddable-extension-common/src/icons'
+)
+const to1 = path.resolve(
+  __dirname,
+  'dist/icons'
+)
 
-const stylusSettingPlugin =  new webpack.LoaderOptionsPlugin({
+const f2 = path.resolve(
+  __dirname,
+  'node_modules/jsstore/dist/jsstore.min.js'
+)
+const f3 = path.resolve(
+  __dirname,
+  'node_modules/jsstore/dist/jsstore.worker.min.js'
+)
+const to2 = path.resolve(
+  __dirname,
+  'dist'
+)
+
+const stylusSettingPlugin = new webpack.LoaderOptionsPlugin({
   test: /\.styl$/,
   stylus: {
     preferPathResolver: 'webpack'
@@ -24,7 +38,7 @@ const stylusSettingPlugin =  new webpack.LoaderOptionsPlugin({
 
 const opts = {
   extensions: ['.map', '.js'],
-  minBytes: 3789
+  minBytes: 3900
 }
 
 const pug = {
@@ -39,10 +53,12 @@ const pug = {
 var config = {
   mode: 'production',
   entry: {
-    content: './src/chrome-extension/content.js'
+    content: './src/content.js',
+    background: './src/background.js',
+    manifest: './src/manifest.json'
   },
   output: {
-    path: __dirname + '/dist',
+    path: path.resolve(__dirname, 'dist'),
     filename: '[name].js',
     publicPath: '/',
     chunkFilename: '[name].[hash].js',
@@ -54,22 +70,51 @@ var config = {
   },
   resolveLoader: {
     modules: [
+      path.join(process.cwd(), 'loaders'),
       path.join(process.cwd(), 'node_modules')
     ]
   },
   optimization: {
-    // We no not want to minimize our code.
     minimize: sysConfigDefault.minimize
   },
   module: {
     rules: [
       {
-        test: /\.jsx?$/,
-        exclude: /node_modules/,
+        test: /manifest\.json$/,
         use: [
-          packThreadCount === 0
-            ? 'babel-loader?cacheDirectory'
-            : 'happypack/loader?cacheDirectory'
+          'manifest-loader'
+        ]
+      },
+      {
+        test: /\.jsx?$/,
+        exclude: /node_modules\/(?!(ringcentral-embeddable-extension-common)\/).*/,
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              cacheDirectory: true,
+              presets: [
+                '@babel/preset-env'
+              ],
+              plugins: [
+                '@babel/plugin-proposal-class-properties',
+                'babel-plugin-lodash',
+                '@babel/plugin-syntax-dynamic-import',
+                [
+                  '@babel/plugin-proposal-decorators',
+                  {
+                    legacy: true
+                  }
+                ],
+                [
+                  '@babel/plugin-transform-runtime',
+                  {
+                    regenerator: true
+                  }
+                ]
+              ]
+            }
+          }
         ]
       },
       {
@@ -87,7 +132,7 @@ var config = {
       {
         test: /\.pug$/,
         use: [
-          'file-loader?name=../app/redirect.html',
+          'file-loader?name=../app/app.html',
           'concat-loader',
           'extract-loader',
           'html-loader',
@@ -98,27 +143,31 @@ var config = {
   },
   devtool: 'source-map',
   plugins: [
-    packThreadCount === 0 ? null : new HappyPack(happyConf),
     stylusSettingPlugin,
     new LodashModuleReplacementPlugin({
       collections: true,
       paths: true
     }),
+    new CopyWebpackPlugin([{
+      from,
+      to: to1,
+      force: true
+    }, {
+      from: f2,
+      to: to2,
+      force: true
+    }, {
+      from: f3,
+      to: to2,
+      force: true
+    }], {}),
     new ExtraneousFileCleanupPlugin(opts),
     new webpack.DefinePlugin({
       'process.env.ringCentralConfigs': JSON.stringify(sysConfigDefault.ringCentralConfigs),
-      'process.env.thirdPartyConfigs': JSON.stringify(sysConfigDefault.thirdPartyConfigs)
+      'process.env.thirdPartyConfigs': JSON.stringify(sysConfigDefault.thirdPartyConfigs),
+      'process.env.version': JSON.stringify(pack.version)
     })
-  ],
-  devServer: {
-    port: sysConfigDefault.devPort,
-    contentBase: __dirname,
-    setup: function(app) {
-      app.use('/', express.static(__dirname))
-    }
-  }
-
+  ]
 }
 
 module.exports = config
-
