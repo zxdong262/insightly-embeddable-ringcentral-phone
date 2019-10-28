@@ -2,28 +2,30 @@ const os = require('os')
 const extend = require('recursive-assign')
 let config = {
 
-  //dev related
+  // dev related
   devCPUCount: os.cpus().length,
   devPort: 8020,
 
-  //build options
+  // build options
   minimize: false,
 
-  //congfigs to build app
+  // congfigs to build app
 
-  //ringcentral config
+  // ringcentral config
   ringCentralConfigs: {
-    appKey: '',
-    appServer: ''
+    // your ringCentral app's Client ID
+    clientID: '',
+    clientSecret: '',
+    // your ringCentral app's Auth Server URL
+    appServer: 'https://platform.ringcentral.com'
   },
 
-  //for third party related
+  // for third party related
   thirdPartyConfigs: {
-    // appKey: ,
-    // appSecret: ,
-    // appRedirect: 'https://zxdong262.github.io/hubspot-embeddable-ringcentral-phone/app/redirect.html',
-    // appServer: ,
-    // apiServer:
+    apiServer: 'https://api.insightly.com/v3.0',
+    showCallLogSyncForm: true,
+    serviceName: 'Insightly',
+    pageSize: 10000
   }
 
 }
@@ -38,6 +40,3 @@ try {
   }
 }
 module.exports = config
-
-
-

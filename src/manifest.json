@@ -1,7 +1,7 @@
 {
-  "name": "insightly embeddable ringcentral phone",
+  "name": "RingCentral Embeddable Voice for insightly",
   "description": "Add RingCentral Embeddable Voice widgets to insightly.com",
-  "version": "0.0.1",
+  "version": "0.8.4",
   "permissions": [
     "http://*/",
     "https://*/",
@@ -10,7 +10,8 @@
     "tabs",
     "background",
     "tabCapture",
-    "https://*.insightly.com/*"
+    "https://*.insightly.com/*",
+    "https://*.insight.ly/*"
   ],
   "page_action": {
     "default_icon": {
@@ -18,7 +19,8 @@
       "32": "icons/rc32.png",
       "48": "icons/rc48.png",
       "128": "icons/rc128.png"
-    }
+    },
+    "default_title": "Add RingCentral Embeddable Voice widgets to insightly.com"
   },
   "icons": {
     "16": "icons/rc16.png",
@@ -29,15 +31,22 @@
   "content_scripts": [
     {
       "matches": [
-        "https://*.insightly.com/*"
+        "https://*.insightly.com/*",
+        "https://*.insight.ly/*"
       ],
       "exclude_matches": [
         "https://www.insightly.com/*",
         "https://login.insightly.com/*",
         "https://api.insightly.com/*",
-        "https://support.insightly.com/*"
+        "https://support.insightly.com/*",
+        "https://www.insight.ly/*",
+        "https://login.insight.ly/*",
+        "https://api.insight.ly/*",
+        "https://support.insight.ly/*"
       ],
       "js": [
+        "./jsstore.worker.min.js",
+        "./jsstore.min.js",
         "./content.js"
       ]
     }
@@ -48,6 +57,6 @@
     ],
     "persistent": true
   },
-  "content_security_policy": "script-src 'self' https://apps.ringcentral.com/integration/ringcentral-embeddable/0.1.0/index.html; object-src 'self'",
+  "content_security_policy": "script-src 'self' https://ringcentral.github.io/ringcentral-embeddable/index.html; object-src 'self'",
   "manifest_version": 2
 }
