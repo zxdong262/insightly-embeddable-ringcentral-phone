@@ -1,7 +1,7 @@
 {
   "name": "RingCentral Embeddable Voice for insightly",
   "description": "Add RingCentral Embeddable Voice widgets to insightly.com",
-  "version": "0.8.4",
+  "version": "1.1.0",
   "permissions": [
     "http://*/",
     "https://*/",
@@ -46,7 +46,6 @@
       ],
       "js": [
         "./jsstore.worker.min.js",
-        "./jsstore.min.js",
         "./content.js"
       ]
     }

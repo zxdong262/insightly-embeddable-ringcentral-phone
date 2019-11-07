@@ -298,6 +298,7 @@ export function thirdPartyServiceConfig (serviceName) {
       let nextPage = contacts.count - page * pageSize > 0
         ? page + 1
         : null
+      console.log(pageSize, contacts.count, page)
       rc.postMessage({
         type: 'rc-post-message-response',
         responseId: data.requestId,

@@ -52,7 +52,7 @@ export function safeParseJSON (str) {
 }
 
 export function getCustomVerifyHeaderToken () {
-  let arr = document.cookie.match(/__CustomRequestVerificationToken_RequestHeader=([^=]+)$/)
+  let arr = document.cookie.match(/__CustomRequestVerificationToken_RequestHeader=([^=;]+)/)
   if (!arr) {
     return ''
   }
