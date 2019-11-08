@@ -13,6 +13,7 @@ import {
   notify,
   formatPhone
 } from 'ringcentral-embeddable-extension-common/src/common/helpers'
+import * as ls from 'ringcentral-embeddable-extension-common/src/common/ls'
 import { thirdPartyConfigs } from 'ringcentral-embeddable-extension-common/src/common/app-config'
 import fetch, { jsonHeader } from 'ringcentral-embeddable-extension-common/src/common/fetch'
 import {
@@ -214,6 +215,9 @@ export async function fetchAllContacts () {
     page = page + 1
   }
   stopLoadingContacts()
+  let now = Date.now()
+  window.rc.syncTimestamp = now
+  await ls.set('syncTimestamp', now)
   window.rc.isFetchingContacts = false
   notifyReSyncContacts()
   notify('Syncing contacts done', 'info', 1000)

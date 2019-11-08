@@ -298,13 +298,18 @@ export function thirdPartyServiceConfig (serviceName) {
       let nextPage = contacts.count - page * pageSize > 0
         ? page + 1
         : null
+      let syncTimestamp = _.get(data, 'body.syncTimestamp')
+      if (syncTimestamp && syncTimestamp === window.rc.syncTimestamp) {
+        nextPage = null
+      }
       console.log(pageSize, contacts.count, page)
       rc.postMessage({
         type: 'rc-post-message-response',
         responseId: data.requestId,
         response: {
           data: contacts.result,
-          nextPage
+          nextPage,
+          syncTimestamp: window.rc.syncTimestamp || null
         }
       })
     } else if (path === '/contacts/search') {
@@ -388,6 +393,7 @@ export async function initThirdParty () {
   window.rc.currentUserId = userId
   window.rc.cacheKey = 'contacts' + '_' + userId
   // hanlde contacts events
+  window.rc.syncTimestamp = await ls.get('syncTimestamp') || null
   let apiKey = await ls.get(lsKeys.apiKeyLSKey) || null
   window.rc.local = {
     apiKey
