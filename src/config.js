@@ -264,11 +264,14 @@ export function thirdPartyServiceConfig (serviceName) {
       showContactInfoPanel(call)
     } else if (type === 'rc-region-settings-notify') {
       const prevCountryCode = window.rc.countryCode || 'US'
+      console.log('prev country code:', prevCountryCode)
       const newCountryCode = data.countryCode
+      console.log('new country code:', newCountryCode)
       if (prevCountryCode !== newCountryCode) {
         fetchAllContacts()
       }
-      window.rc.countryCode = data.countryCode
+      window.rc.countryCode = newCountryCode
+      ls.set('rc-country-code', newCountryCode)
     }
     if (type !== 'rc-post-message-request') {
       return
@@ -399,6 +402,8 @@ export async function initThirdParty () {
   let userId = getUserId()
   window.rc.currentUserId = userId
   window.rc.cacheKey = 'contacts' + '_' + userId
+  window.rc.countryCode = await ls.get('rc-country-code') || undefined
+  console.log('rc.countryCode:', window.rc.countryCode)
   // hanlde contacts events
   window.rc.syncTimestamp = await ls.get('syncTimestamp') || null
   let apiKey = await ls.get(lsKeys.apiKeyLSKey) || null
