@@ -4,7 +4,7 @@
 
 import dayjs from 'dayjs'
 import { thirdPartyConfigs } from 'ringcentral-embeddable-extension-common/src/common/app-config'
-import { createForm } from './call-log-sync-form'
+import { createForm, getContactInfo } from './call-log-sync-form'
 import extLinkSvg from 'ringcentral-embeddable-extension-common/src/common/link-external.svg'
 import {
   showAuthBtn
@@ -15,6 +15,7 @@ import {
 } from 'ringcentral-embeddable-extension-common/src/common/db'
 import {
   notify,
+  formatPhone,
   host
 } from 'ringcentral-embeddable-extension-common/src/common/helpers'
 import {
@@ -56,17 +57,28 @@ export async function syncCallLogToThirdParty (body) {
   // if (result !== 'Call connected') {
   //   return notify('You can only log connected call')
   // }
-  let isManuallySync = !body.triggerType
-  let isAutoSync = body.triggerType === 'callLogSync'
+  let isManuallySync = !body.triggerType || body.triggerType === 'manual'
+  let isAutoSync = body.triggerType === 'callLogSync' || body.triggerType === 'auto'
   if (!isAutoSync && !isManuallySync) {
+    return
+  }
+  if (_.get(body, 'sessionIds')) {
+    // todo: support voicemail
     return
   }
   if (!window.rc.local.apiKey) {
     return isManuallySync ? showAuthBtn() : null
   }
   if (showCallLogSyncForm && isManuallySync) {
+    let contactRelated = await getContactInfo(body, serviceName)
+    if (
+      !contactRelated ||
+      (!contactRelated.froms && !contactRelated.tos)
+    ) {
+      return notify('No related contact')
+    }
     return createForm(
-      body.call,
+      body,
       serviceName,
       (formData) => doSync(body, formData)
     )
@@ -76,23 +88,39 @@ export async function syncCallLogToThirdParty (body) {
 }
 
 async function getSyncContacts (body) {
-  let objs = _.filter(
-    [
-      ..._.get(body, 'call.toMatches') || [],
-      ..._.get(body, 'call.fromMatches') || []
-    ],
-    m => m.type === serviceName
-  )
-  if (objs.length) {
-    return objs
+  // let objs = _.filter(
+  //   [
+  //     ..._.get(body, 'call.toMatches') || [],
+  //     ..._.get(body, 'call.fromMatches') || [],
+  //     ...(_.get(body, 'correspondentEntity') ? [_.get(body, 'correspondentEntity')] : [])
+  //   ],
+  //   m => m.type === serviceName
+  // )
+  // if (objs.length) {
+  //   return objs
+  // }
+  let all = []
+  if (body.call) {
+    let nf = _.get(body, 'to.phoneNumber') ||
+      _.get(body, 'call.to.phoneNumber')
+    let nt = _.get(body, 'from.phoneNumber') ||
+      _.get(body.call, 'from.phoneNumber')
+    all = [nt, nf]
+  } else {
+    all = [
+      _.get(body, 'conversation.self.phoneNumber'),
+      ...body.conversation.correspondents.map(d => d.phoneNumber)
+    ]
   }
-  let nf = _.get(body, 'to.phoneNumber') || _.get(body.call, 'to.phoneNumber')
-  let nt = _.get(body, 'from.phoneNumber') || _.get(body.call, 'from.phoneNumber')
-  let contacts = await match([nf, nt])
-  return _.uniqBy([
-    ...contacts[nf],
-    ...contacts[nt]
-  ], 'id')
+  all = all.map(s => formatPhone(s))
+  let contacts = await match(all)
+  let arr = Object.keys(contacts).reduce((p, k) => {
+    return [
+      ...p,
+      ...contacts[k]
+    ]
+  }, [])
+  return _.uniqBy(arr, d => d.id)
 }
 
 function buildFormData (data) {

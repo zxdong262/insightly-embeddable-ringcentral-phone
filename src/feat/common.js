@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import fetch from 'ringcentral-embeddable-extension-common/src/common/fetch'
 import {
-  host
+  host, formatPhone
 } from 'ringcentral-embeddable-extension-common/src/common/helpers'
 export const APIKEYLS = 'third-party-api-token'
 export const lsKeys = {
@@ -57,4 +57,8 @@ export function getCustomVerifyHeaderToken () {
     return ''
   }
   return decodeURIComponent(arr[1] || '')
+}
+
+export function formatPhoneLocal (number) {
+  return formatPhone(number, undefined, 'formatNational')
 }
