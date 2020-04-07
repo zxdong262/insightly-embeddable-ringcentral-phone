@@ -227,34 +227,24 @@ export async function fetchAllContacts () {
  * get contact lists
  */
 export const getContacts = async function (page = 1) {
+  const final = {
+    result: [],
+    count: 0
+  }
   if (!window.rc.rcLogined) {
-    return []
+    return final
   }
   if (!window.rc.local.apiKey) {
     showAuthBtn()
-    return []
+    return final
   }
   let cached = await getByPage(page).catch(console.log)
   if (cached && cached.result && cached.result.length) {
     console.log('use cache')
     return cached
   }
-  loadingContacts()
-  window.rc.isFetchingContacts = true
-  let res = await fetchContacts(page)
-  stopLoadingContacts()
-  window.rc.isFetchingContacts = false
   fetchAllContacts()
-  let count = window.rc.isFetchingContacts
-    ? 0
-    : res.Contact.count + res.Lead.count
-  return {
-    result: [
-      ...res.Contact.result,
-      ...res.Lead.result
-    ],
-    count
-  }
+  return final
 }
 
 export function hideContactInfoPanel () {
