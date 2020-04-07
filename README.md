@@ -6,7 +6,7 @@ Created with [ringcentral-embeddable-extension-factory](https://github.com/ringc
 
 ## YouTube video
 
-[https://youtu.be/wEK-y_GrCGs](https://youtu.be/wEK-y_GrCGs)
+[https://youtu.be/keF3VftoPIk](https://youtu.be/keF3VftoPIk)
 
 ## Screenshots
 
