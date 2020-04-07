@@ -26,6 +26,7 @@ Created with [ringcentral-embeddable-extension-factory](https://github.com/ringc
 - Check hubspot activities from ringcentral contact panel
 - Custom X-USER-AGENT header for api request
 - Active call control
+- Support RingCentral Video
 
 ## Try it
 
