@@ -6,7 +6,7 @@ Created with [ringcentral-embeddable-extension-factory](https://github.com/ringc
 
 ## YouTube video
 
-[https://youtu.be/keF3VftoPIk](https://youtu.be/keF3VftoPIk)
+[https://youtu.be/7SlzfYAghzo](https://youtu.be/7SlzfYAghzo)
 
 ## Screenshots
 
@@ -19,6 +19,10 @@ Created with [ringcentral-embeddable-extension-factory](https://github.com/ringc
 ## Features
 
 - Click to call button
+- Click to SMS/MMS
+- Click to schedule meeting
+- Sync all/recent created contacts
+- Create new contact from call history
 - Popup caller info panel when call inbound
 - Build with custom app config
 - Show contact event from RingCentral Widgets
