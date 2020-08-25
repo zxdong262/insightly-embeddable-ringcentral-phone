@@ -52,17 +52,21 @@ let {
   apiServer
 } = thirdPartyConfigs
 
-async function addContact (i) {
-  console.log(i)
+export async function addContact ({
+  phone,
+  firstname,
+  lastname,
+  contactEmail
+}) {
   let body = {
-    FIRST_NAME: 'XXx' + i,
-    LAST_NAME: 'Test',
-    EMAIL_ADDRESS: `xxx${i}@xx.xx`,
-    PHONE: `+${16504378935 + i}`
+    FIRST_NAME: firstname,
+    LAST_NAME: lastname,
+    EMAIL_ADDRESS: contactEmail,
+    PHONE: phone
   }
   let conf = {
     headers: {
-      Authorization: `Basic ${window.rc.local.apiKey}`,
+      Authorization: `Basic ${window.rc.apiKey}`,
       ...jsonHeader
     },
     method: 'post',
@@ -70,20 +74,21 @@ async function addContact (i) {
   }
   let url = `${apiServer}/Contacts`
   let res = await fetchBg(url, conf)
-  console.log(res)
+  console.log(res, 'add con')
+  return res
 }
 
-function wait (ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
-}
+// function wait (ms) {
+//   return new Promise((resolve) => {
+//     setTimeout(resolve, ms)
+//   })
+// }
 
-async function addContacts (all = 1500) {
-  for (let i = 0; i < all; i++) {
-    await addContact(i)
-    await wait(500)
-  }
-}
+// async function addContacts (all = 1500) {
+//   for (let i = 0; i < all; i++) {
+//     await addContact(i)
+//     await wait(500)
+//   }
+// }
 
-setTimeout(addContacts, 5000)
+// setTimeout(addContacts, 5000)

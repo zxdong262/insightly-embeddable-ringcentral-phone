@@ -8,10 +8,9 @@
  */
 
 import _ from 'lodash'
+import copy from 'json-deep-copy'
 import {
-  fetchApiKey,
-  APIKEYLS,
-  lsKeys
+  getUserId as getEmail
 } from './feat/common'
 import {
   RCBTNCLS2,
@@ -31,8 +30,7 @@ import {
   doAuth,
   notifyRCAuthed,
   unAuth,
-  renderAuthButton,
-  renderAuthPanel
+  getApiKey
 } from './feat/auth'
 import {
   syncCallLogToThirdParty
@@ -45,8 +43,13 @@ import {
 
 import {
   search,
-  match
+  match,
+  getByPage
 } from 'ringcentral-embeddable-extension-common/src/common/db'
+import initReact from './lib/react-entry'
+import initInner from './lib/inner-entry'
+import initInnerCallLog from './lib/call-log-entry.js'
+import { resyncCheck } from './lib/auto-resync'
 
 let {
   apiServer,
@@ -91,19 +94,10 @@ async function getNumbers (ids = getIds()) {
     vid
   } = ids
   let url = `${apiServer}/Contacts/${vid}`
-  let apiKey = await ls.get(APIKEYLS)
-  if (!apiKey) {
-    apiKey = await fetchApiKey()
-    if (!apiKey) {
-      return []
-    }
-    apiKey = window.btoa(apiKey)
-  }
-
   let res = await fetchBg(url, {
     headers: {
       ...jsonHeader,
-      Authorization: `Basic ${apiKey}`
+      Authorization: `Basic ${window.rc.apiKey}`
     }
   })
   return res ? formatNumbers(res) : []
@@ -140,7 +134,6 @@ export const insertClickToCallButton = [
           return prev
         }, [])
     },
-
     // parent dom to insert call button
     // can be multiple condition
     // the first one matches, rest the array will be ignored
@@ -204,8 +197,7 @@ export const phoneNumberSelectors = [
 ]
 
 export function getUserId () {
-  let arr = document.body.textContent.match(/email: '(.+)'/)
-  return arr ? arr[1] || '' : ''
+  return getEmail()
 }
 
 /**
@@ -214,7 +206,7 @@ export function getUserId () {
  */
 export function thirdPartyServiceConfig (serviceName) {
   console.log(serviceName)
-
+  const logTitle = `Log to ${serviceName}`
   let services = {
     name: serviceName,
     // show contacts in ringcentral widgets
@@ -231,11 +223,17 @@ export function thirdPartyServiceConfig (serviceName) {
 
     // Enable call log sync feature
     callLoggerPath: '/callLogger',
-    callLoggerTitle: `Log to ${serviceName}`,
+    callLoggerTitle: logTitle,
+    callLogEntityMatcherPath: '/callLogger/match',
 
     // show contact activities in ringcentral widgets
     activitiesPath: '/activities',
-    activityPath: '/activity'
+    activityPath: '/activity',
+
+    // meeting
+    meetingInvitePath: '/meeting/invite',
+    meetingInviteTitle: `Schedule meeting`
+
   }
 
   // handle ringcentral event
@@ -248,15 +246,29 @@ export function thirdPartyServiceConfig (serviceName) {
       return
     }
     console.debug('event data', data)
-    let { type, loggedIn, path, call } = data
+    let { type, loggedIn, path, call, requestId, sessionIds } = data
     if (type === 'rc-login-status-notify') {
       console.log('rc logined', loggedIn)
       window.rc.rcLogined = loggedIn
     }
+    if (type === 'rc-sync-log-success') {
+      // response to widget
+      window.rc.postMessage({
+        type: 'rc-post-message-response',
+        responseId: requestId,
+        response: { data: 'ok' }
+      })
+      setTimeout(() => {
+        rc.postMessage({
+          type: 'rc-adapter-trigger-call-logger-match',
+          sessionIds
+        })
+      }, 8000)
+    }
     if (
       type === 'rc-route-changed-notify' &&
       path === '/contacts' &&
-      !window.rc.local.apiKey
+      !window.rc.local.authed
     ) {
       showAuthBtn()
     } else if (
@@ -273,6 +285,10 @@ export function thirdPartyServiceConfig (serviceName) {
       }
       window.rc.countryCode = newCountryCode
       ls.set('rc-country-code', newCountryCode)
+    } else if (type === 'rc-call-end-notify') {
+      const dd = copy(data)
+      dd.type = 'rc-show-add-contact-panel'
+      window.postMessage(dd, '*')
     }
     if (type !== 'rc-post-message-request') {
       return
@@ -281,7 +297,7 @@ export function thirdPartyServiceConfig (serviceName) {
     let { rc } = window
 
     if (data.path === '/authorize') {
-      if (rc.local.apiKey) {
+      if (rc.local.authed) {
         unAuth()
       } else {
         doAuth()
@@ -293,38 +309,45 @@ export function thirdPartyServiceConfig (serviceName) {
       })
     } else if (path === '/contacts') {
       let isMannulSync = _.get(data, 'body.type') === 'manual'
-      if (isMannulSync) {
-        fetchAllContacts()
-        rc.postMessage({
+      let page = _.get(data, 'body.page') || 1
+      if (isMannulSync && page === 1) {
+        window.postMessage({
+          type: 'rc-show-sync-menu'
+        }, '*')
+        return rc.postMessage({
           type: 'rc-post-message-response',
           responseId: data.requestId,
           response: {
             data: []
           }
         })
-        return
       }
-      let page = _.get(data, 'body.page') || 1
+      const now = Date.now()
+      window.postMessage({
+        type: 'rc-transferring-data',
+        transferringData: true
+      }, '*')
       let contacts = await getContacts(page)
       let nextPage = contacts.count - page * pageSize > 0
         ? page + 1
         : null
-      let syncTimestamp = _.get(data, 'body.syncTimestamp')
-      if (syncTimestamp && syncTimestamp === window.rc.syncTimestamp) {
-        nextPage = null
-      }
-      console.debug(pageSize, contacts.count, page)
+      const no2 = Date.now()
+      console.debug(no2 - now)
+      window.postMessage({
+        type: 'rc-transferring-data',
+        transferringData: false
+      }, '*')
       rc.postMessage({
         type: 'rc-post-message-response',
         responseId: data.requestId,
         response: {
           data: contacts.result,
           nextPage,
-          syncTimestamp: window.rc.syncTimestamp || null
+          syncTimeStamp: rc.syncTimeStamp
         }
       })
     } else if (path === '/contacts/search') {
-      if (!window.rc.local.apiKey) {
+      if (!window.rc.local.authed) {
         return showAuthBtn()
       }
       let contacts = []
@@ -340,7 +363,7 @@ export function thirdPartyServiceConfig (serviceName) {
         }
       })
     } else if (path === '/contacts/match') {
-      if (!window.rc.local.apiKey) {
+      if (!window.rc.local.authed) {
         return showAuthBtn()
       }
       let phoneNumbers = _.get(data, 'body.phoneNumbers') || []
@@ -354,12 +377,9 @@ export function thirdPartyServiceConfig (serviceName) {
       })
     } else if (path === '/callLogger') {
       // add your codes here to log call to your service
-      syncCallLogToThirdParty(data.body)
-      // response to widget
-      rc.postMessage({
-        type: 'rc-post-message-response',
-        responseId: data.requestId,
-        response: { data: 'ok' }
+      syncCallLogToThirdParty({
+        ...data.body,
+        requestId: data.requestId
       })
     } else if (path === '/activities') {
       const activities = await getActivities(data.body)
@@ -407,17 +427,21 @@ export async function initThirdParty () {
   console.log('rc.countryCode:', window.rc.countryCode)
   // hanlde contacts events
   window.rc.syncTimestamp = await ls.get('syncTimestamp') || null
-  let apiKey = await ls.get(lsKeys.apiKeyLSKey) || null
+  let authed = await ls.get('authed') || null
   window.rc.local = {
-    apiKey
+    authed
   }
 
   // get the html ready
-  renderAuthPanel()
-  renderAuthButton()
   upgrade()
 
-  if (window.rc.local.apiKey) {
+  if (window.rc.local.authed) {
     notifyRCAuthed()
   }
+  initReact()
+  initInner()
+  initInnerCallLog()
+  getApiKey()
+  const db = await getByPage(1, 1)
+  resyncCheck(db && db.count)
 }

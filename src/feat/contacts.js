@@ -13,7 +13,6 @@ import {
   notify,
   formatPhone
 } from 'ringcentral-embeddable-extension-common/src/common/helpers'
-import * as ls from 'ringcentral-embeddable-extension-common/src/common/ls'
 import { thirdPartyConfigs } from 'ringcentral-embeddable-extension-common/src/common/app-config'
 import fetch, { jsonHeader } from 'ringcentral-embeddable-extension-common/src/common/fetch'
 import {
@@ -27,10 +26,15 @@ import {
   getByPage,
   match
 } from 'ringcentral-embeddable-extension-common/src/common/db'
+import { setCache, getCache } from 'ringcentral-embeddable-extension-common/src/common/cache'
+import { Modal } from 'antd'
+import loadingSvg from 'ringcentral-embeddable-extension-common/src/common/loading.svg'
 
 let {
   serviceName
 } = thirdPartyConfigs
+
+const lastSyncOffset = 'last-sync-offset'
 
 const types = [
   'Contact',
@@ -107,7 +111,7 @@ function buildPhone (contact) {
  * @param {array} contacts
  * @return {array}
  */
-function formatContacts (contacts) {
+export function formatContacts (contacts) {
   return contacts.map(contact => {
     let {
       CONTACT_ID,
@@ -133,7 +137,7 @@ function formatContacts (contacts) {
  * @param {string} type Contact or Lead
  * @param {int} page
  */
-async function getContactByType (type, page) {
+async function getContactByType (type, page, recent) {
   let url = `${host}/MetadataListView/GetList`
   let token = getCustomVerifyHeaderToken()
   let conf = {
@@ -148,7 +152,7 @@ async function getContactByType (type, page) {
     readDb: true,
     sort: [],
     type,
-    viewId: 'ALL'
+    viewId: recent ? 'NEWLAST24H' : 'ALL'
   }, conf)
   if (!res) {
     console.log(`fetch ${type} error`)
@@ -163,7 +167,7 @@ async function getContactByType (type, page) {
   }
 }
 
-async function fetchContacts (page, drained = {}) {
+async function fetchContacts (page, drained = {}, recent) {
   let res = {}
   for (let type of types) {
     let r = drained[type]
@@ -171,7 +175,7 @@ async function fetchContacts (page, drained = {}) {
         result: [],
         count: 0
       }
-      : await getContactByType(type, page)
+      : await getContactByType(type, page, recent)
     res[type] = r || {
       result: [],
       count: 0
@@ -180,26 +184,46 @@ async function fetchContacts (page, drained = {}) {
   return res
 }
 
-export async function fetchAllContacts () {
-  if (!window.rc.local.apiKey) {
+export async function fetchAllContacts (_getRecent, showModal = true) {
+  if (!window.rc.local.authed) {
     showAuthBtn()
     return
   }
   if (window.rc.isFetchingContacts) {
     return
   }
+  let getRecent = !!_getRecent
   window.rc.isFetchingContacts = true
   loadingContacts()
+  if (showModal) {
+    Modal.info({
+      zIndex: 2334,
+      title: 'Syncing contacts, please stay in this page',
+      content: 'Please stay in this page until the syncing finished, it may take minutes according to your contacts count, you can close this modal.'
+    })
+  }
   let drained = types.reduce((p, t) => {
     return {
       ...p,
       [t]: false
     }
   }, {})
-  let page = 1
-  await remove()
+  const syncOffset = lastSyncOffset
+  let offset = await getCache(syncOffset) || 1
+  console.debug(offset, 'offset', getRecent)
+  let dbTest = await getByPage(1, 1)
+  console.debug('dbTest', dbTest)
+  if (!dbTest || !dbTest.count || offset > 1) {
+    getRecent = false
+  }
+  if (!getRecent && offset === 1) {
+    await remove()
+  }
   while (!drained.Contact || !drained.Lead) {
-    let r = await fetchContacts(page)
+    if (!getRecent) {
+      await setCache(syncOffset, offset, 'never')
+    }
+    let r = await fetchContacts(offset, drained, getRecent)
     if (!r.Contact.result.length) {
       drained.Contact = true
     }
@@ -212,12 +236,15 @@ export async function fetchAllContacts () {
     ]
     await insert(arr)
     notifyReSyncContacts()
-    page = page + 1
+    offset = offset + 1
+  }
+  if (!getRecent) {
+    await setCache(syncOffset, 0, 'never')
   }
   stopLoadingContacts()
   let now = Date.now()
   window.rc.syncTimestamp = now
-  await ls.set('syncTimestamp', now)
+  await setCache('rc-sync-timestamp', window.rc.syncTimeStamp, 'never')
   window.rc.isFetchingContacts = false
   notifyReSyncContacts()
   notify('Syncing contacts done', 'info', 1000)
@@ -234,7 +261,7 @@ export const getContacts = async function (page = 1) {
   if (!window.rc.rcLogined) {
     return final
   }
-  if (!window.rc.local.apiKey) {
+  if (!window.rc.local.authed) {
     showAuthBtn()
     return final
   }
@@ -243,7 +270,7 @@ export const getContacts = async function (page = 1) {
     console.log('use cache')
     return cached
   }
-  fetchAllContacts()
+  fetchAllContacts(false, true)
   return final
 }
 
@@ -271,7 +298,7 @@ export async function showContactInfoPanel (call) {
     return
   }
   phone = formatPhone(phone)
-  let contacts = await match([phone])
+  let contacts = await match([phone], 1)
   let contact = _.get(contacts, `${phone}[0]`)
   if (!contact) {
     return
@@ -311,13 +338,6 @@ export async function showContactInfoPanel (call) {
   popup()
 }
 
-export function hideRefreshContacts () {
-  let refreshContactsBtn = document.getElementById('rc-reload-contacts')
-  if (refreshContactsBtn) {
-    refreshContactsBtn.remove()
-  }
-}
-
 function loadingContacts () {
   let loadingContactsBtn = document.getElementById('rc-reloading-contacts')
   if (loadingContactsBtn) {
@@ -329,7 +349,15 @@ function loadingContacts () {
       class="rc-reloading-contacts"
       id="rc-reloading-contacts"
       title="Reload contacts"
-    />Syncing contacts</span>
+    />
+      <img
+        src="${loadingSvg}"
+        class="rc-iblock rc-spinning rc-mg1r"
+        width=16
+        height=16
+      />
+      Syncing contacts, please stay in this page until it is done
+    </span>
     `
   )
   document.body.appendChild(elem)
@@ -342,7 +370,7 @@ function stopLoadingContacts () {
   }
 }
 
-function notifyReSyncContacts () {
+export function notifyReSyncContacts () {
   window.rc.postMessage({
     type: 'rc-adapter-sync-third-party-contacts'
   })

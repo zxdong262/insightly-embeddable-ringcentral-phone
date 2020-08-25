@@ -7,6 +7,13 @@ const LodashModuleReplacementPlugin = require('lodash-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const pack = require('./package.json')
 
+const stylusSettingPlugin = new webpack.LoaderOptionsPlugin({
+  test: /\.styl$/,
+  stylus: {
+    preferPathResolver: 'webpack'
+  }
+})
+
 const from = path.resolve(
   __dirname,
   'node_modules/ringcentral-embeddable-extension-common/src/icons'
@@ -15,28 +22,57 @@ const to1 = path.resolve(
   __dirname,
   'dist/icons'
 )
-
+// const f2 = path.resolve(
+//   __dirname,
+//   'node_modules/jsstore/dist/jsstore.min.js'
+// )
+const f31 = path.resolve(
+  __dirname,
+  'node_modules/react/umd/react.production.min.js'
+)
+const f32 = path.resolve(
+  __dirname,
+  'node_modules/react-dom/umd/react-dom.production.min.js'
+)
 const f3 = path.resolve(
   __dirname,
   'node_modules/jsstore/dist/jsstore.worker.min.js'
 )
-const to2 = path.resolve(
+const to4 = path.resolve(
   __dirname,
   'dist'
 )
-
-const stylusSettingPlugin = new webpack.LoaderOptionsPlugin({
-  test: /\.styl$/,
-  stylus: {
-    preferPathResolver: 'webpack'
-  }
-})
-
 const opts = {
   extensions: ['.map', '.js'],
   minBytes: 3900
 }
-
+const patterns = [{
+  from,
+  to: to1,
+  force: true
+}, /* {
+  from: f2,
+  to: to4,
+  force: true
+}, */ {
+  from: f3,
+  to: to4,
+  force: true
+}, /* {
+  from: f2,
+  to: to4f,
+  force: true
+}, */
+{
+  from: f31,
+  to: to4,
+  force: true
+},
+{
+  from: f32,
+  to: to4,
+  force: true
+}]
 const pug = {
   loader: 'pug-html-loader',
   options: {
@@ -61,7 +97,10 @@ var config = {
     libraryTarget: 'var'
   },
   resolve: {
-    extensions: ['.js', '.json']
+    extensions: ['.js', '.json'],
+    alias: {
+      'antd/dist/antd.less$': path.resolve(__dirname, 'src/lib/antd.less')
+    }
   },
   resolveLoader: {
     modules: [
@@ -69,15 +108,39 @@ var config = {
       path.join(process.cwd(), 'node_modules')
     ]
   },
+  externals: {
+    react: 'React',
+    'react-dom': 'ReactDOM'
+  },
   optimization: {
     minimize: sysConfigDefault.minimize
   },
   module: {
     rules: [
       {
-        test: /manifest\.json$/,
+        test: /manifest\.json$|manifest-firefox\.json$/,
         use: [
           'manifest-loader'
+        ]
+      },
+      {
+        test: /\.less$/,
+        use: [
+          {
+            loader: 'style-loader'
+          },
+          {
+            loader: 'css-loader'
+          },
+          {
+            loader: 'postcss-loader'
+          },
+          {
+            loader: 'less-loader',
+            options: {
+              javascriptEnabled: true
+            }
+          }
         ]
       },
       {
@@ -89,7 +152,13 @@ var config = {
             options: {
               cacheDirectory: true,
               presets: [
-                '@babel/preset-env'
+                '@babel/react',
+                ['@babel/env', {
+                  targets: {
+                    chrome: 58,
+                    node: 'current'
+                  }
+                }]
               ],
               plugins: [
                 '@babel/plugin-proposal-class-properties',
@@ -105,6 +174,14 @@ var config = {
                   '@babel/plugin-transform-runtime',
                   {
                     regenerator: true
+                  }
+                ],
+                [
+                  'import',
+                  {
+                    libraryName: 'antd',
+                    libraryDirectory: 'es',
+                    style: true
                   }
                 ]
               ]
@@ -127,7 +204,7 @@ var config = {
       {
         test: /\.pug$/,
         use: [
-          'file-loader?name=../app/app.html',
+          'file-loader?name=../app/redirect.html',
           'concat-loader',
           'extract-loader',
           'html-loader',
@@ -143,15 +220,7 @@ var config = {
       collections: true,
       paths: true
     }),
-    new CopyWebpackPlugin([{
-      from,
-      to: to1,
-      force: true
-    }, {
-      from: f3,
-      to: to2,
-      force: true
-    }], {}),
+    new CopyWebpackPlugin({ patterns }),
     new ExtraneousFileCleanupPlugin(opts),
     new webpack.DefinePlugin({
       'process.env.ringCentralConfigs': JSON.stringify(sysConfigDefault.ringCentralConfigs),

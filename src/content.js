@@ -18,14 +18,15 @@ let {
 let appConfigQuery = ''
 let { serviceName } = thirdPartyConfigs
 if (clientID || appServer) {
-  appConfigQuery = `?appVersion=${appVersion}&prefix=${serviceName}-rc&disconnectInactiveWebphone=1&newAdapterUI=1&userAgent=${serviceName}_extension%2F${appVersion}&disableActiveCallControl=false&appKey=${clientID}&appSecret=${clientSecret}&appServer=${encodeURIComponent(appServer)}`
+  appConfigQuery = `?appVersion=${appVersion}&zIndex=2222&prefix=${serviceName}-rc&newAdapterUI=1&disconnectInactiveWebphone=1&userAgent=${serviceName}_extension%2F${appVersion}&disableActiveCallControl=false&appKey=${clientID}&appSecret=${clientSecret}&appServer=${encodeURIComponent(appServer)}&disableConferenceCall=false`
 }
 
 /* eslint-disable-next-line */
 ;(function() {
   console.log('import RingCentral Embeddable Voice to web page')
   var rcs = document.createElement('script')
-  rcs.src = 'https://apps.ringcentral.com/integration/ringcentral-embeddable-preview/adapter.js' + appConfigQuery
+  var u = chrome.runtime.getURL('embeddable/adapter.js') + appConfigQuery
+  rcs.src = u
   var rcs0 = document.getElementsByTagName('script')[0]
   rcs0.parentNode.insertBefore(rcs, rcs0)
 })()

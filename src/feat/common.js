@@ -3,10 +3,6 @@ import fetch from 'ringcentral-embeddable-extension-common/src/common/fetch'
 import {
   host, formatPhone
 } from 'ringcentral-embeddable-extension-common/src/common/helpers'
-export const APIKEYLS = 'third-party-api-token'
-export const lsKeys = {
-  apiKeyLSKey: APIKEYLS
-}
 /**
  * get api key from user setting page
  */
@@ -60,5 +56,31 @@ export function getCustomVerifyHeaderToken () {
 }
 
 export function formatPhoneLocal (number) {
-  return formatPhone(number, undefined, 'formatNational')
+  return formatPhone(number, undefined)
+}
+
+export function delay (ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
+
+export const autoLogPrefix = 'rc-auto-log-id:'
+export function getFullNumber (numberObj) {
+  if (!numberObj) {
+    return ''
+  } else if (_.isString(numberObj)) {
+    return numberObj
+  }
+  const {
+    extensionNumber,
+    phoneNumber = ''
+  } = numberObj
+  return phoneNumber +
+    (extensionNumber ? '#' + extensionNumber : '')
+}
+
+export function getUserId () {
+  let arr = document.body.textContent.match(/email: '(.+)'/)
+  return arr ? arr[1] || '' : ''
 }
