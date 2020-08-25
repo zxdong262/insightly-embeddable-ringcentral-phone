@@ -14,7 +14,7 @@ import { thirdPartyConfigs } from 'ringcentral-embeddable-extension-common/src/c
 import {
   notify, formatPhone
 } from 'ringcentral-embeddable-extension-common/src/common/helpers'
-// import CountDown from './countdown'
+import CountDown from './countdown'
 import { getFullNumber } from '../feat/common'
 
 let {
@@ -51,7 +51,7 @@ export default function AddContactForm (props) {
     body, isManuallySync
   } = props.form
   const isCall = !!body.call
-  // const timer = isCall ? 100 : 100
+  const timer = isCall ? 100 : 100
   const cls = 'rc-hide'
   function onFinish (data) {
     doSync(
@@ -127,27 +127,27 @@ export default function AddContactForm (props) {
   function handleCancel () {
     props.remove(props.form.id)
   }
-  // let ref
-  // function onTimeout () {
-  //   form.submit()
-  // }
+  let ref
+  function onTimeout () {
+    form.submit()
+  }
   useEffect(() => {
     checkContacts()
-    // if (!props.form.isManuallySync) {
-    //   ref = setTimeout(onTimeout, timer)
-    // }
-    // return () => {
-    //   clearTimeout(ref)
-    // }
+    if (!props.form.isManuallySync) {
+      ref = setTimeout(onTimeout, timer)
+    }
+    return () => {
+      clearTimeout(ref)
+    }
   }, [])
-  // function renderCountDown () {
-  //   if (props.form.isManuallySync) {
-  //     return null
-  //   }
-  //   return (
-  //     <span>(<CountDown time={20} />)</span>
-  //   )
-  // }
+  function renderCountDown () {
+    if (props.form.isManuallySync) {
+      return null
+    }
+    return (
+      <span>(<CountDown time={20} />)</span>
+    )
+  }
   return (
     <div className={cls}>
       <div className='rc-pd2'>
@@ -186,7 +186,7 @@ export default function AddContactForm (props) {
                 : null
             }
             <Button type='primary' htmlType='submit'>
-              Submit
+              Submit {renderCountDown()}
             </Button>
             <Button onClick={handleCancel} className='rc-mg1l'>
               Cancel
