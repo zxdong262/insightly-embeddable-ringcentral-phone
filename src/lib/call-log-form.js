@@ -51,8 +51,8 @@ export default function AddContactForm (props) {
     body, isManuallySync
   } = props.form
   const isCall = !!body.call
-  const timer = isCall ? 100 : 100
-  const cls = 'rc-hide'
+  const timer = 100
+  const cls = isCall ? 'rc-add-call-log-form' : 'rc-hide'
   function onFinish (data) {
     doSync(
       body,
