@@ -1,6 +1,6 @@
 {
   "name": "insightly-embeddable-ringcentral-phone",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "RingCentral Embeddable Voice with Chrome extension for Insightly",
   "main": "index.js",
   "scripts": {
@@ -42,7 +42,7 @@
     "@babel/preset-react": "^7.8.3",
     "@babel/register": "^7.8.6",
     "@babel/runtime": "7.4.3",
-    "antd": "4.0.4",
+    "antd": "^4.1.4",
     "babel-eslint": "10.0.1",
     "babel-loader": "8.0.5",
     "babel-plugin-import": "1.10.0",
