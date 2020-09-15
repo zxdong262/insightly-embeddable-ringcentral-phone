@@ -7,8 +7,11 @@ import {
   notify,
   host
 } from 'ringcentral-embeddable-extension-common/src/common/helpers'
-import fetch from 'ringcentral-embeddable-extension-common/src/common/fetch'
+import fetch, { jsonHeader } from 'ringcentral-embeddable-extension-common/src/common/fetch'
 import extLinkSvg from 'ringcentral-embeddable-extension-common/src/common/link-external.svg'
+import {
+  getCustomVerifyHeaderToken
+} from './common'
 
 export function showActivityDetail (body) {
   let { activity = {} } = body
@@ -63,13 +66,21 @@ export async function getActivities (body) {
   if (!id || id.startsWith('LEAD_')) {
     return []
   }
+  let token = getCustomVerifyHeaderToken()
+  let conf = {
+    headers: {
+      ...jsonHeader,
+      RequestVerificationToken: token
+    }
+  }
+  // https://crm.na1.insightly.com/Metadata/GetDetailActivityGridData?gridType=Past&readDb=True
   let url = `${host}/Metadata/GetDetailActivityGridData?gridType=Past&readDb=False`
   let data = {
     type: 'Contact',
     viewId: id,
     page: 1
   }
-  let res = await fetch.post(url, data)
+  let res = await fetch.post(url, data, conf)
   if (res && res.Items) {
     return formatEngagements(JSON.parse(res.Items), body.contact)
   } else {

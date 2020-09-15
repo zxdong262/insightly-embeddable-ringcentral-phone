@@ -272,6 +272,14 @@ export function thirdPartyServiceConfig (serviceName) {
     ) {
       showAuthBtn()
     } else if (
+      type === 'rc-route-changed-notify' &&
+      path === '/history'
+    ) {
+      window.rc.postMessage({
+        type: 'rc-adapter-trigger-call-logger-match',
+        sessionIds
+      })
+    } else if (
       type === 'rc-active-call-notify'
     ) {
       showContactInfoPanel(call)
