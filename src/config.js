@@ -57,7 +57,7 @@ let {
 } = thirdPartyConfigs
 
 function getIds (href = window.location.href) {
-  let reg = /\/contact\/(\d+)/
+  let reg = /\/contact\/(\d+)/i
   let arr = href.match(reg) || []
   let vid = arr[1]
   if (!vid) {
@@ -107,7 +107,7 @@ export const insertClickToCallButton = [
   {
     // must match page url
     shouldAct: href => {
-      return href.includes('?blade=/details/contact')
+      return href.toLowerCase().includes('?blade=/details/contact')
     },
 
     // define in the page how to get phone number,
@@ -157,7 +157,7 @@ export const hoverShowClickToCallButton = [
   {
     // must match url
     shouldAct: href => {
-      return href.includes('list/Contact/')
+      return href.toLowerCase().includes('list/Contact/')
     },
 
     // elemment selector
@@ -176,7 +176,7 @@ export const hoverShowClickToCallButton = [
           number: txt
         }]
       }
-      let linkElem = elem.querySelector('a[href*="/Contacts/Details/"]')
+      let linkElem = elem.querySelector('a[href*="/Contacts/Details/" i]')
       let href = linkElem
         ? linkElem.getAttribute('href')
         : ''
@@ -190,7 +190,7 @@ export const hoverShowClickToCallButton = [
 export const phoneNumberSelectors = [
   {
     shouldAct: (href) => {
-      return href.includes('?blade=/details/contact')
+      return href.toLowerCase().includes('?blade=/details/contact')
     },
     selector: '#modal-details-body .metadata-span-phone'
   }

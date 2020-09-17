@@ -25,7 +25,7 @@ let config = {
     apiServer: 'https://api.insightly.com/v3.0',
     showCallLogSyncForm: true,
     serviceName: 'Insightly',
-    pageSize: 10000
+    pageSize: 100000
   }
 
 }

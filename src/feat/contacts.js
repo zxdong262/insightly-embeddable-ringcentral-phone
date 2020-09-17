@@ -270,7 +270,9 @@ export const getContacts = async function (page = 1) {
     console.log('use cache')
     return cached
   }
-  fetchAllContacts(false, true)
+  if (page === 1) {
+    fetchAllContacts(false, true)
+  }
   return final
 }
 
