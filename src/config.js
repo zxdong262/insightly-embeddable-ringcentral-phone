@@ -259,7 +259,7 @@ export function thirdPartyServiceConfig (serviceName) {
         response: { data: 'ok' }
       })
       setTimeout(() => {
-        rc.postMessage({
+        window.rc.postMessage({
           type: 'rc-adapter-trigger-call-logger-match',
           sessionIds
         })
@@ -310,7 +310,7 @@ export function thirdPartyServiceConfig (serviceName) {
       } else {
         doAuth()
       }
-      rc.postMessage({
+      window.rc.postMessage({
         type: 'rc-post-message-response',
         responseId: data.requestId,
         response: { data: 'ok' }
@@ -322,7 +322,7 @@ export function thirdPartyServiceConfig (serviceName) {
         window.postMessage({
           type: 'rc-show-sync-menu'
         }, '*')
-        return rc.postMessage({
+        return window.rc.postMessage({
           type: 'rc-post-message-response',
           responseId: data.requestId,
           response: {
@@ -345,13 +345,13 @@ export function thirdPartyServiceConfig (serviceName) {
         type: 'rc-transferring-data',
         transferringData: false
       }, '*')
-      rc.postMessage({
+      window.rc.postMessage({
         type: 'rc-post-message-response',
         responseId: data.requestId,
         response: {
           data: contacts.result,
           nextPage,
-          syncTimeStamp: rc.syncTimeStamp
+          syncTimeStamp: window.rc.syncTimeStamp
         }
       })
     } else if (path === '/contacts/search') {
@@ -363,7 +363,7 @@ export function thirdPartyServiceConfig (serviceName) {
       if (keyword) {
         contacts = await search(keyword)
       }
-      rc.postMessage({
+      window.rc.postMessage({
         type: 'rc-post-message-response',
         responseId: data.requestId,
         response: {
@@ -376,7 +376,7 @@ export function thirdPartyServiceConfig (serviceName) {
       }
       let phoneNumbers = _.get(data, 'body.phoneNumbers') || []
       let res = await match(phoneNumbers)
-      rc.postMessage({
+      window.rc.postMessage({
         type: 'rc-post-message-response',
         responseId: data.requestId,
         response: {
@@ -401,7 +401,7 @@ export function thirdPartyServiceConfig (serviceName) {
       ]
       */
       // response to widget
-      rc.postMessage({
+      window.rc.postMessage({
         type: 'rc-post-message-response',
         responseId: data.requestId,
         response: { data: activities }
@@ -409,7 +409,7 @@ export function thirdPartyServiceConfig (serviceName) {
     } else if (path === '/activity') {
       // response to widget
       showActivityDetail(data.body)
-      rc.postMessage({
+      window.rc.postMessage({
         type: 'rc-post-message-response',
         responseId: data.requestId,
         response: { data: 'ok' }

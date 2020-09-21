@@ -1,7 +1,7 @@
 {
   "name": "RingCentral Embeddable Voice for insightly",
   "description": "Add RingCentral Embeddable Voice widgets to insightly.com",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqbmbo2wD0gTTI0KCWEUJAT7dT+eBvhE9FQFum6dq6mY/1Rei55qWm551TqX2+ThB0Ap/vOE7hiwEbpYcsar6dTLCjidifn4F4qgH0Ws9znWyFi6+Et/6LcOvVr070WZzgXnHTV6i4kPw1n52+R3LPrn53OG7dlt61/L5pQMc/4lRmAiQvFGNbKCgb9ja1H/wIRcDSUx0Fuarumw8OhPm1svdtJPSqSxubDbO2LSmuzKvSRMt5OI9CwgZYdpWH5s6Tqlbl48TFxLEPApOUF3g2eRGt95+z56gEdJgre9BKFqyEPE/Mkj6A9AJxZDdbgL0+oT3kbN60MoToQrGmRsApwIDAQAB",
   "permissions": [
     "http://*/",
