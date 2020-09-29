@@ -107,7 +107,7 @@ export const insertClickToCallButton = [
   {
     // must match page url
     shouldAct: href => {
-      return href.toLowerCase().includes('?blade=/details/contact')
+      return href.toLowerCase().includes('?blade=/details/contact') || /\/details\/contact\/\d+/.test(window.location.href.toLowerCase())
     },
 
     // define in the page how to get phone number,
@@ -140,11 +140,11 @@ export const insertClickToCallButton = [
     parentsToInsertButton: [
       {
         getElem: () => {
-          return document.querySelector('#modal-details-body header .btn-toolbar')
+          return document.querySelector('header .btn-toolbar')
         },
         insertMethod: 'insertBefore',
         shouldInsert: () => {
-          return !document.querySelector('#modal-details-body header .btn-toolbar .' + RCBTNCLS2)
+          return !document.querySelector('header .btn-toolbar .' + RCBTNCLS2)
         }
       }
     ]
@@ -193,6 +193,12 @@ export const phoneNumberSelectors = [
       return href.toLowerCase().includes('?blade=/details/contact')
     },
     selector: '#modal-details-body .metadata-span-phone'
+  },
+  {
+    shouldAct: (href) => {
+      return /\/details\/contact\/\d+/.test(window.location.href.toLowerCase())
+    },
+    selector: '#main-container .metadata-span-phone'
   }
 ]
 
