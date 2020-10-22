@@ -3,13 +3,16 @@
  */
 
 import { useEffect } from 'react'
-import { Modal, Button } from 'antd'
+import { Modal, Button, notification } from 'antd'
 import { SyncOutlined, InfoCircleOutlined } from '@ant-design/icons'
 import { fetchAllContacts, notifyReSyncContacts } from '../feat/contacts'
 import { doAuth } from '../feat/auth'
 import AutoSync from './auto-resync'
 import './antd.less'
 import 'antd/dist/antd.less'
+import {
+  remove
+} from 'ringcentral-embeddable-extension-common/src/common/db'
 
 function showSyncMenu () {
   let mod = null
@@ -25,12 +28,19 @@ function showSyncMenu () {
     notifyReSyncContacts()
     destroyMod()
   }
+  async function delAll () {
+    await remove()
+    notification.success({
+      message: 'All contacts removed from extension database',
+      zIndex: 6697
+    })
+  }
   function destroyMod () {
     mod.destroy()
   }
   const content = (
     <div>
-      <div className='rc-pd2b'>After Sync contacts, conatacts data will update, so auto call log can match right contacts, you could choose sync only recent updated/created contacts or sync all contacts.</div>
+      <div className='rc-pd2b'>After Sync contacts, contacts data will update, so auto call log can match right contacts, you could choose sync only recent updated/created contacts or sync all contacts.</div>
       <div>
         <Button
           type='primary'
@@ -45,6 +55,13 @@ function showSyncMenu () {
           onClick={syncAll}
         >
           Sync all contacts
+        </Button>
+        <Button
+          type='primary'
+          className='rc-mg1r rc-mg1b'
+          onClick={delAll}
+        >
+          Remove all contacts data from extension database
         </Button>
         <Button
           type='ghost'

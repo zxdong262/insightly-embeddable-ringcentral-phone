@@ -21,7 +21,6 @@ import {
 } from './common'
 
 import {
-  remove,
   insert,
   getByPage,
   match
@@ -216,9 +215,6 @@ export async function fetchAllContacts (_getRecent, showModal = true) {
   if (!dbTest || !dbTest.count || offset > 1) {
     getRecent = false
   }
-  if (!getRecent && offset === 1) {
-    await remove()
-  }
   while (!drained.Contact || !drained.Lead) {
     if (!getRecent) {
       await setCache(syncOffset, offset, 'never')
@@ -233,7 +229,7 @@ export async function fetchAllContacts (_getRecent, showModal = true) {
     let arr = [
       ...r.Contact.result,
       ...r.Lead.result
-    ]
+    ].filter(d => d.phoneNumbers.length)
     await insert(arr)
     notifyReSyncContacts()
     offset = offset + 1
@@ -268,9 +264,11 @@ export const getContacts = async function (page = 1) {
   let cached = await getByPage(page).catch(console.log)
   if (cached && cached.result && cached.result.length) {
     console.log('use cache')
+    console.log('contacts:', cached.result.length)
     return cached
   }
-  if (page === 1) {
+  if (page === 1 && !window.rc.syncTimestamp) {
+    console.log('trigger', window.rc.syncTimestamp)
     fetchAllContacts(false, true)
   }
   return final

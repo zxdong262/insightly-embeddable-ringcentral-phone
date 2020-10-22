@@ -448,7 +448,7 @@ export async function initThirdParty () {
   window.rc.countryCode = await ls.get('rc-country-code') || undefined
   console.log('rc.countryCode:', window.rc.countryCode)
   // hanlde contacts events
-  window.rc.syncTimestamp = await ls.get('syncTimestamp') || null
+  window.rc.syncTimestamp = await ls.get('rc-sync-timestamp') || null
   let authed = await ls.get('authed') || null
   window.rc.local = {
     authed
