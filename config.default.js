@@ -25,6 +25,7 @@ let config = {
     apiServer: 'https://api.insightly.com/v3.0',
     showCallLogSyncForm: true,
     serviceName: 'Insightly',
+    appName: 'insightly-embeddable-ringcentral-phone',
     pageSize: 100000
   }
 
