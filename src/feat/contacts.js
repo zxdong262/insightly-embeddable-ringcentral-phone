@@ -287,7 +287,7 @@ export function hideContactInfoPanel () {
 export async function showContactInfoPanel (call) {
   if (
     !call ||
-    call.telephonyStatus !== 'Ringing' ||
+    // call.telephonyStatus !== 'Ringing' ||
     call.direction === 'Outbound'
   ) {
     return

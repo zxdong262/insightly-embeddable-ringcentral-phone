@@ -294,7 +294,7 @@ export function thirdPartyServiceConfig (serviceName) {
         sessionIds
       })
     } else if (
-      type === 'rc-active-call-notify'
+      type === 'rc-call-ring-notify'
     ) {
       showContactInfoPanel(call)
     } else if (type === 'rc-region-settings-notify') {
