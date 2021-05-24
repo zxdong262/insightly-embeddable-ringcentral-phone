@@ -107,7 +107,7 @@ export const insertClickToCallButton = [
   {
     // must match page url
     shouldAct: href => {
-      return href.toLowerCase().includes('?blade=/details/contact') || /\/details\/contact\/\d+/.test(window.location.href.toLowerCase())
+      return href.toLowerCase().includes('?blade=/details/contact') || /\/details\/contact\/\d+/.test(window.location.href.toLowerCase()) || /\/contacts\/details\/\d+/.test(window.location.href.toLowerCase())
     },
 
     // define in the page how to get phone number,
